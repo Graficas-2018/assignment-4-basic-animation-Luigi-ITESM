@@ -12,13 +12,16 @@ monster = null,
 group = null,
 orbitControls = null;
 
-var objLoader = null, mtlLoader = null;
+var mixers = [];
+
+var objLoader = null, mtlLoader = null, fbxLoader = null;
 
 //var duration = 20000; // ms
 var duration = 10, // sec
 raptorAnimator = null;
 
 var currentTime = Date.now();
+var clock = new THREE.Clock();
 
 function loadObjAndMtl()
 {
@@ -74,9 +77,55 @@ function loadObjAndMtl()
     );
 }
 
+function loadFBX() {
+    fbxLoader = new THREE.FBXLoader();
+    fbxLoader.load( '../models/human/BaseMesh_Anim.fbx', function ( object ) {
+
+        //var texture = new THREE.TextureLoader().load('../models/wolf/textures/Wolf_Body.jpg');
+
+        object.mixer = new THREE.AnimationMixer( object );
+        mixers.push( object.mixer );
+
+        var action = object.mixer.clipAction( object.animations[ 0 ] );
+        action.play();
+        object.traverse( function ( child ) {
+
+            if ( child.isMesh ) {
+                child.castShadow = true;
+                //child.map = texture;
+                child.receiveShadow = true;
+            }
+        });
+
+        raptor = object;
+        raptor.scale.set(0.05, 0.05, 0.05);
+        raptor.rotation.x -= Math.PI / 2;
+        //raptor.position.z = -3;
+        raptor.position.y = -4;
+        scene.add( raptor );
+        playAnimations();
+
+    },
+    function ( xhr ) {
+
+        console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+            
+    },
+    // called when loading has errors
+    function ( error ) {        
+        console.log( 'An error happened: ' + error );
+    });
+}
+
 function run()
 {
     requestAnimationFrame(function() { run(); });
+
+        if ( mixers.length > 0 ) {
+            for ( var i = 0; i < mixers.length; i ++ ) {
+                mixers[ i ].update( clock.getDelta() );
+            }
+        }
     
         // Render the scene
         renderer.render( scene, camera );
@@ -153,7 +202,9 @@ function createScene(canvas) {
     root.add(ambientLight);
     
     // Create the objects
-    loadObjAndMtl();
+    // If you want to change to the raptor just remove the comment in the following line and add a comment to loadFBX()
+    //loadObjAndMtl();
+    loadFBX();
 
     // Create a group to hold the objects
     group = new THREE.Object3D;
@@ -200,23 +251,23 @@ function playAnimations() {
                         { 
                             keys:[0, 1], 
                             values:[
-                                    { y : Math.PI / 2 },
-                                    { y : 5 * Math.PI / 2},
+                                    { z : Math.PI / 2 },
+                                    { z : 5 * Math.PI / 2},
                                     ],
                             target:raptor.rotation
                         },
                         {
                             keys:[0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1],
                             values:[
-                                    { x : 3 * Math.cos(-Math.PI / 2), z : -3 * Math.sin(-Math.PI / 2) - 3 },
-                                    { x : 3 * Math.cos(-Math.PI / 4), z : -3 * Math.sin(-Math.PI / 4) - 3 },
-                                    { x : 3 * Math.cos(0), z : -3 * Math.sin(0) - 3},
-                                    { x : 3 * Math.cos(Math.PI / 4), z : -3 * Math.sin(Math.PI / 4) - 3},
-                                    { x : 3 * Math.cos(Math.PI / 2), z : -3 * Math.sin(Math.PI / 2) - 3},
-                                    { x : 3 * Math.cos(3 * Math.PI / 4), z : -3 * Math.sin(3 * Math.PI / 4) - 3},
-                                    { x : 3 * Math.cos(Math.PI), z : -3 * Math.sin(Math.PI) - 3},
-                                    { x : 3 * Math.cos(5 * Math.PI / 4), z : -3 * Math.sin(5 * Math.PI / 4) - 3},
-                                    { x : 3 * Math.cos(3 * Math.PI / 2), z : -3 * Math.sin(3 * Math.PI / 2) - 3},
+                                    { x : 5 * Math.cos(-Math.PI / 2), z : -5 * Math.sin(-Math.PI / 2) - 5 },
+                                    { x : 5 * Math.cos(-Math.PI / 4), z : -5 * Math.sin(-Math.PI / 4) - 5 },
+                                    { x : 5 * Math.cos(0), z : -5 * Math.sin(0) - 5},
+                                    { x : 5 * Math.cos(Math.PI / 4), z : -5 * Math.sin(Math.PI / 4) - 5},
+                                    { x : 5 * Math.cos(Math.PI / 2), z : -5 * Math.sin(Math.PI / 2) - 5},
+                                    { x : 5 * Math.cos(3 * Math.PI / 4), z : -5 * Math.sin(3 * Math.PI / 4) - 5},
+                                    { x : 5 * Math.cos(Math.PI), z : -5 * Math.sin(Math.PI) - 5},
+                                    { x : 5 * Math.cos(5 * Math.PI / 4), z : -5 * Math.sin(5 * Math.PI / 4) - 5},
+                                    { x : 5 * Math.cos(3 * Math.PI / 2), z : -5 * Math.sin(3 * Math.PI / 2) - 5},
                                     ],
                             target:raptor.position
                         },
